@@ -1,0 +1,35 @@
+{% extends 'main/base.html'%}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+<table id="order_table">
+    <thead>
+    <tr>
+        <th>ID Детали</th>
+        <th>Название детали</th>
+        <th>Поставщик</th>
+        <th>Количестов</th>
+        <th>Цена</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in items %}
+    <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.spare_part }}</td>
+        <td>{{ item.supplier }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ item.price }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<form action="{% url 'main:create_order_cust_detail' order.id %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Добавить</button>
+    <a href="{% url 'main:create_order_cust' %}" class="btn">Выйти</a>
+</form>
+{% endblock %}

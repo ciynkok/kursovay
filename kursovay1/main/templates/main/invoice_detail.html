@@ -1,0 +1,36 @@
+{% extends 'main/base.html'%}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+<table id="order_table">
+    <thead>
+    <tr>
+        <th>ID Детали</th>
+        <th>Название детали</th>
+        <th>Количестов</th>
+        <th>Цена</th>
+        <th>Сумма</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in items %}
+    <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.spare_part }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ item.price }}</td>
+        <td>{{ item.sum_of }}</td>
+        <td>
+            <a href="{% url 'main:add_invoice_detail' order.id item.id %}">Указать цену</a>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<p>
+    <a href="{% url 'main:invoices' %}" class="btn">Выйти</a>
+</p>
+{% endblock %}

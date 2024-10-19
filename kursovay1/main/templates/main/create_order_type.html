@@ -1,0 +1,37 @@
+
+{% extends 'main/base.html'%}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+<p>
+    {{ ordercust.customer_name }}
+</p>
+<p>
+    {{ ordercust.customer_phone }}
+</p>
+<p>
+    {{ ordercust.car }}
+</p>
+<p>
+    {{ ordercust.prepayment }}
+</p>
+<p>
+    {{ ordercust.delivery_time }}
+</p>
+<form action="{% url 'main:order_cust_type' ordercust.id %}" method="post">
+    {% csrf_token %}
+    <p>
+        <label for="calculation">Способ оплаты:</label>
+        <select id="calculation" name="calculation">
+            <option value="Наличный Расчёт">Наличный Расчёт</option>
+            <option value="Безналичный Расчёт">Безналичный Расчёт</option>
+            <option value="Кредит">Кредит</option>
+            <option value="Бартер">Бартер</option>
+            <option value="Взаимозачёт">Взаимозачёт</option>
+        </select>
+    </p>
+    <button type="submit">Сохранить</button>
+</form>
+{% endblock %}

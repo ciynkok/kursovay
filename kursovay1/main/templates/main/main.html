@@ -4,4 +4,37 @@
 {% endblock %}
 
 {% block content %}
+{% if staff %}
+<a href="{% url 'main:workspace' %}" class="btn">Войти в рабочее место</a>
+{% endif %}
+<table id="order_table">
+    <thead>
+    <tr>
+        <th>ID Заказа</th>
+        <th>Имя клиента</th>
+        <th>Сумма предоплаты</th>
+        <th>Время прибытия заказа</th>
+        <th>Вид продажи</th>
+        <th>Детали заказа</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for order in orders %}
+    <tr>
+        <td>{{ order.id }}</td>
+        <td>{{ order.customer_name }}</td>
+        <td>{{ order.prepayment }}</td>
+        <td>{{ order.delivery_time }}</td>
+        <td>{{ order.type_sale }}</td>
+        <td>
+            <a href="{% url 'main:order_cust_type' order.id %}">Детали заказа</a>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<p>
+    <a href="{% url 'main:logout' %}" class="btn">Выйти</a>
+</p>
+{{ x }}
 {% endblock %}

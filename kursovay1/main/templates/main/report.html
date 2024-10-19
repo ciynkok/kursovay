@@ -1,7 +1,246 @@
-{% extends 'main/base.html'%}
+<!DOCTYPE html>
 
-{% block css %}
-{% endblock %}
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>{{ title }}</title>
+    <style>
+        table {
+            margin-top: 10px;
+            margin-right: 5px;
+            width: 50%;
+            border-collapse: collapse;
+        }
 
-{% block content %}
-{% endblock %}
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #A9A9A9;
+            background-color: #A9A9A9;
+        }
+
+        .btn {
+            background-color: #A9A9A9;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            text-decoration: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            }
+    </style>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body style="background-color: #FFFFFF">
+<hr />
+  <div class="row">
+    <div class="col-md-6">
+      <canvas id="myBar1"></canvas>
+    </div>
+    <div class="col-md-6">
+      <canvas id="myBar2"></canvas>
+    </div>
+      <div class="col-md-6">
+      <canvas id="myBar3"></canvas>
+    </div>
+      <div class="col-md-6">
+      <canvas id="myBar4"></canvas>
+    </div>
+  </div>
+<div id="parameter_table">
+</div>
+<p>
+    <a class="btn" href="{% url 'main:workspace' %}">Выйти</a>
+</p>
+<table>
+    <thead>
+    <tr>
+        <th>Поставщик</th>
+        <th>Деталь</th>
+        <th>Сумма</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for i in data %}
+    <tr>
+        {% for v in i.values %}
+        <td>{{ v }} </td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+    <tr>
+        <td></td>
+        <td>Сумма предоплаты</td>
+        <td>{{ sum_prep }}</td>
+    </tr>
+    </tbody>
+</table>
+{{ d }}
+ <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+ <script>
+     $.ajax({
+        method: "GET",
+        url: "{% url 'main:func' %}",
+        success: function(data) {
+            drawGraph1(data, 'myBar1');
+            drawGraph2(data, 'myBar2')
+            drawGraph3(data, 'myBar3')
+            drawGraph4(data, 'myBar4')
+            console.log("drawing");
+        },
+        error: function(error_data) {
+            console.log(error_data);
+        }
+     })
+
+    function drawGraph1(data, id) {
+      var labels = data.labels1;
+      var label = data.label1;
+      var data = data.data1;
+      var ctx = document.getElementById(id).getContext('2d');
+      var chart1 = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            barPercentage: 0.5,
+            barThickness: 6,
+            maxBarThickness: 8,
+            minBarLength: 2,
+            backgroundColor: 'rgba(0, 0, 255, 0.2)',
+            label: label,
+            data: data,
+          },]
+        },
+
+        // Configuration options go here
+        options: {
+          scales: {
+            xAxes: [{
+              display: true
+            }],
+            yAxes: [{
+              ticks: {
+                beginAtZero: true
+              }
+            }]
+          }
+        }
+      });
+    }
+
+     function drawGraph2(data, id) {
+      var labels = data.labels2;
+      var label = data.label2;
+      var data = data.data2;
+      var ctx = document.getElementById(id).getContext('2d');
+      var chart1 = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            barPercentage: 0.5,
+            barThickness: 6,
+            maxBarThickness: 8,
+            minBarLength: 2,
+            backgroundColor: 'rgba(0, 0, 255, 0.2)',
+            label: label,
+            data: data,
+          },]
+        },
+
+        // Configuration options go here
+        options: {
+          scales: {
+            xAxes: [{
+              display: true
+            }],
+            yAxes: [{
+              ticks: {
+                beginAtZero: true
+              }
+            }]
+          }
+        }
+      });
+    }
+
+     function drawGraph3(data, id) {
+      var labels = data.labels3;
+      var label = data.label3;
+      var data = data.data3;
+      var ctx = document.getElementById(id).getContext('2d');
+      var chart1 = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            barPercentage: 0.5,
+            barThickness: 6,
+            maxBarThickness: 8,
+            minBarLength: 2,
+            backgroundColor: 'rgba(0, 0, 255, 0.2)',
+            label: label,
+            data: data,
+          },]
+        },
+
+        // Configuration options go here
+        options: {
+          scales: {
+            xAxes: [{
+              display: true
+            }],
+            yAxes: [{
+              ticks: {
+                beginAtZero: true
+              }
+            }]
+          }
+        }
+      });
+    }
+
+     function drawGraph4(data, id) {
+      var labels = data.labels4;
+      var label = data.label4;
+      var data = data.data4;
+      var ctx = document.getElementById(id).getContext('2d');
+      var chart1 = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            barPercentage: 0.5,
+            barThickness: 6,
+            maxBarThickness: 8,
+            minBarLength: 2,
+            backgroundColor: 'rgba(0, 0, 255, 0.2)',
+            label: label,
+            data: data,
+          },]
+        },
+
+        // Configuration options go here
+        options: {
+          scales: {
+            xAxes: [{
+              display: true
+            }],
+            yAxes: [{
+              ticks: {
+                beginAtZero: true
+              }
+            }]
+          }
+        }
+      });
+    }
+ </script>
+</body>
+</html>

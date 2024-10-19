@@ -1,0 +1,68 @@
+{% extends 'main/base.html'%}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+<div>
+    <table id="order">
+        <thead>
+        <tr>
+            <th></th>
+            <th>Имя клиента</th>
+            <th>Сумма предоплаты</th>
+            <th>Время прибытия заказа</th>
+            <th>Вид продажи</th>
+            <th>Детали заказа</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Номер документа</td>
+            <td>{{ order.id }}</td>
+        </tr>
+        <tr>
+            <td>Имя клиента</td>
+            <td>{{ order.customer_name }}</td>
+        </tr>
+        <tr>
+            <td>Телефон клиента</td>
+            <td>{{ order.customer_phone }}</td>
+        </tr>
+        <tr>
+            <td>Машина клиента</td>
+            <td>{{ order.car }}</td>
+        </tr>
+        <tr>
+            <td>Срок доставки</td>
+            <td>{{ order.delivery_time }}</td>
+        </tr>
+        <tr>
+            <td>Сумма предоплаты</td>
+            <td>{{ order.prepayment }}</td>
+        </tr>
+        </tbody>
+    </table>
+    <table id="order_table">
+    <thead>
+    <tr>
+        <th>ID Детали</th>
+        <th>Название детали</th>
+        <th>Количестов</th>
+        <th>Цена</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in items %}
+    <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.spare_part }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ item.price }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{% endblock %}

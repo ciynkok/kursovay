@@ -1,0 +1,12 @@
+{% extends 'main/base.html'%}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+<form action="{% url 'main:add_invoice_detail' order.id item.id %}" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <button type="submit">Изменить</button>
+</form>
+{% endblock %}

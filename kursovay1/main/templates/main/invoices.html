@@ -4,4 +4,34 @@
 {% endblock %}
 
 {% block content %}
+<div>
+    <table id="order_table">
+        <thead>
+        <tr>
+            <th>ID Накладной</th>
+            <th>Дата</th>
+            <th>Поставщик</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order.id }}</td>
+            <td>{{ order.date }}</td>
+            <td>{{ order.supplier }}</td>
+            <td>
+                <a href="{% url 'main:invoice_detail' order.id %}">Детали накладной</a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<form action="{% url 'main:invoices' %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Составить</button>
+    <a href="{% url 'main:workspace' %}" class="btn">Выйти</a>
+</form>
 {% endblock %}

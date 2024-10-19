@@ -4,5 +4,9 @@
 {% endblock %}
 
 {% block content %}
-
+<form action="{% url 'main:index' %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Авторизоваться</button>
+</form>
 {% endblock %}
