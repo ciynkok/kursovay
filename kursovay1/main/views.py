@@ -10,6 +10,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from weasyprint import HTML
 from django.http import HttpResponse
+from django.http import HttpResponse
+from django.template import loader
+import weasyprint
 
 
 # Create your views here.
@@ -233,8 +236,21 @@ class ChartData(APIView):
 
 
 def generate_pdf_order_cust(request, order_id):
-    pdf = HTML(string='<h1>Ваш HTML-код здесь</h1>').write_pdf()
-    response = HttpResponse(pdf, content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="your_file.pdf"'
-    return response
+    def generate_pdf(request):
+        # Load your HTML template
+        template = loader.get_template('my_template.html')
+
+        # Render the HTML content
+        context = {'context_variable': 'some_value'}  # Replace with your context data
+        html_content = template.render(context)
+
+        # Create a PDF object
+        pdf = weasyprint.HTML(string=html_content)
+
+        # Generate the PDF file
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="my_pdf.pdf"'
+        pdf.write_pdf(response)
+
+        return response
 
