@@ -4,41 +4,10 @@
 {% endblock %}
 
 {% block content %}
-<div>
-    <table id="order_table">
-        <thead>
-        <tr>
-            <th>ID Заказа</th>
-            <th>Имя клиента</th>
-            <th>Сумма предоплаты</th>
-            <th>Время прибытия заказа</th>
-            <th>Вид продажи</th>
-            <th>Детали заказа</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for order in orders %}
-        <tr>
-            <td>{{ order.id }}</td>
-            <td>{{ order.customer_name }}</td>
-            <td>{{ order.prepayment }}</td>
-            <td>{{ order.delivery_time }}</td>
-            <td>{{ order.type_sale }}</td>
-            <td>
-                <a href="{% url 'main:create_order_cust_detail' order.id %}">Детали заказа</a>
-            </td>
-            <td>
-                <a href="{% url 'main:form_order_cust' order.id %}">Печать</a>
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
 <form action="{% url 'main:create_order_cust' %}" method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Составить</button>
-    <a href="{% url 'main:workspace' %}" class="btn">Выйти</a>
+    <a href="{% url 'main:order_cust' %}" class="btn">Выйти</a>
 </form>
 {% endblock %}

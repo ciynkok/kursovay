@@ -8,11 +8,12 @@ from django.db.models import Sum, Q, Count
 from datetime import datetime, date
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from weasyprint import HTML
 from django.http import HttpResponse
 from django.http import HttpResponse
 from django.template import loader
-import weasyprint
+import io
+from django.http import FileResponse
+from reportlab.pdfgen import canvas
 
 
 # Create your views here.
@@ -138,6 +139,13 @@ def logout_user(request):
     return HttpResponseRedirect(reverse('main:index'))
 
 
+def order_cust(request):
+    context = {'title': 'Заказы покупателей',
+               'orders': OrderCust.objects.all(),
+               }
+    return render(request, 'main/order_cust.html', context)
+
+
 def create_order_cust(request):
     error = ''
     if request.method == 'POST':
@@ -235,22 +243,23 @@ class ChartData(APIView):
         return Response(data=data)
 
 
-def generate_pdf_order_cust(request, order_id):
-    def generate_pdf(request):
-        # Load your HTML template
-        template = loader.get_template('my_template.html')
+def some_view(request, order_id):
+    # Create a file-like buffer to receive PDF data.
+    buffer = io.BytesIO()
 
-        # Render the HTML content
-        context = {'context_variable': 'some_value'}  # Replace with your context data
-        html_content = template.render(context)
+    # Create the PDF object, using the buffer as its "file."
+    p = canvas.Canvas(buffer)
 
-        # Create a PDF object
-        pdf = weasyprint.HTML(string=html_content)
+    # Draw things on the PDF. Here's where the PDF generation happens.
+    # See the ReportLab documentation for the full list of functionality.
+    p.drawString(100, 100, "Hello world.")
 
-        # Generate the PDF file
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="my_pdf.pdf"'
-        pdf.write_pdf(response)
+    # Close the PDF object cleanly, and we're done.
+    p.showPage()
+    p.save()
 
-        return response
+    # FileResponse sets the Content-Disposition header so that browsers
+    # present the option to save the file.
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename="hello.pdf")
 
