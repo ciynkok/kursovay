@@ -59,7 +59,7 @@ class OrderSup(models.Model):
 class OrderSupItem(models.Model):
     order = models.ForeignKey(OrderSup, on_delete=models.CASCADE, related_name='items')
     spare_part = models.ForeignKey(SparePart, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
+    quantity = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.quantity} x {self.spare_part.name}"

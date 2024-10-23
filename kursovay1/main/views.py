@@ -4,16 +4,22 @@ from django.contrib.auth import authenticate, login, logout
 from .models import OrderCust, OrderCustItem, OrderSup, OrderSupItem, Supplier, SparePart, Invoice, InvoiceItem
 from django.urls import reverse
 from .forms import OrderCustForm, OrderCustItemForm, InvoiceItemForm, InvoicesForm
-from django.db.models import Sum, Q, Count
+from django.db.models import Sum, Q
 from datetime import datetime, date
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.http import HttpResponse
-from django.http import HttpResponse
-from django.template import loader
 import io
 from django.http import FileResponse
+from reportlab.platypus.tables import Table, TableStyle
+from reportlab.lib.units import inch
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.platypus import Paragraph
 from reportlab.pdfgen import canvas
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
+from reportlab.lib import colors
+
+
 
 
 # Create your views here.
@@ -68,31 +74,97 @@ def order_cust_type(request, order_id):
 
 
 def workspace(request):
-    return render(request, 'main/workspace.html', {'x':
-                                                       Invoice.objects.values('supplier', 'items__spare_part').annotate(sum_of_=Sum('items__sum_of'))})
+    return render(request, 'main/workspace.html', )
+
+
+def order_sup(request):
+    context = {'title': 'Заказы для поставщиков',
+               'orders': OrderSup.objects.all(),
+               }
+    return render(request, 'main/order_sup.html', context)
+
+
+def form_order_sup(request, order_id):
+    order = get_object_or_404(OrderSup, pk=order_id)
+    buffer = io.BytesIO()
+
+    # Create the PDF object, using the buffer as its "file."
+    p = canvas.Canvas(buffer)
+    document_title = f'form_order_sup_{order.id}'
+    supplier = order.supplier
+    title = f'Заказ {supplier}'
+    date_ = str(order.date)
+    id_ = '0' * (10 - len((str(order.id)))) + str(order.id)
+    items = OrderSupItem.objects.filter(order=order)
+
+    p.setTitle(document_title)
+    pdfmetrics.registerFont(
+        TTFont('abc', 'timesnewromanpsmt.ttf')
+    )
+
+    # creating the title by setting it's font
+    # and putting it on the canvas
+    p.setFont('abc', 16)
+    p.drawCentredString(300, 770, title)
+
+    # Draw things on the PDF. Here's where the PDF generation happens.
+    # See the ReportLab documentation for the full list of functionality.
+    p.setFont('abc', 14)
+
+    p.drawString(50, 700, 'Код: ' + id_)
+    p.drawString(50, 680, 'Дата: ' + date_)
+
+    my_data = [['Название детали', 'Количество'], ]
+
+    for i in items:
+        my_data.append([i.spare_part, i.quantity])
+
+    c_width = [3 * inch, 1.5 * inch]
+    t = Table(my_data, rowHeights=20, repeatRows=1, colWidths=c_width)
+    t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                           ('FONTSIZE', (0, 0), (-1, -1), 14),
+                           ('FONTNAME', (0, 0), (-1, -1), 'abc'),
+                           ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                           ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                           ]))
+
+    h = 550 - (10 * items.count())
+    t.wrapOn(p, 300, 50)
+    t.drawOn(p, 50, h)
+
+    p.showPage()
+    p.save()
+
+    # FileResponse sets the Content-Disposition header so that browsers
+    # present the option to save the file.
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename=f"form_order_sup_{order.id}.pdf")
 
 
 def create_order_sup(request):
     m = []
     today = date.today()
-    order_cust = OrderCust.objects.filter(Q(date__gte=datetime(today.year, today.month, today.day, 0, 0, 0))
-                                          & Q(date__lte=datetime(today.year, today.month, today.day + 1, 0, 0, 0)))
+    gd = datetime(today.year, today.month, today.day, 0, 0, 0)
+    ld = datetime(today.year, today.month, today.day + 1, 0, 0, 0)
+    order_cust = OrderCust.objects.filter(Q(date__gte=gd) & Q(date__lte=ld))
     for ord in order_cust:
         m.append(ord)
     orders_sup = OrderCustItem.objects.filter(order__in=m).values('supplier').annotate(Sum('quantity'))
     suppliers = Supplier.objects.all()
     for order in orders_sup:
-        o = OrderSup.objects.get_or_create(
-            supplier=suppliers.get(Q(id=order['supplier'])) & Q(date__gte=datetime(today.year, today.month, today.day, 0, 0, 0))
-                                        & Q(date__lte=datetime(today.year, today.month, today.day + 1, 0, 0, 0)))[0]
-        items = OrderCustItem.objects.filter(supplier=suppliers.get(id=order['supplier'])).values('spare_part').annotate(sum_quantity=Sum('quantity'))
+        o = OrderSup.objects.filter(Q(supplier=suppliers.get(id=order['supplier'])) & Q(date__gte=gd) & Q(date__lte=ld))
+        if o.count() == 0:
+            o = OrderSup(supplier=suppliers.get(id=order['supplier']))
+            o.save()
+        else:
+            o = o.get(supplier=suppliers.get(id=order['supplier']))
+        items = OrderCustItem.objects.filter(order__in=m, supplier=suppliers.get(id=order['supplier'])).values('spare_part').annotate(sum_quantity=Sum('quantity'))
         for item in items:
-            sup_item = OrderSupItem(order=o, spare_part=SparePart.objects.get(id=item['spare_part']), quantity=item['sum_quantity'])
-            if OrderSupItem.objects.filter(order=o, spare_part=SparePart.objects.get(id=item['spare_part'])).exists():
-                OrderSupItem.objects.filter(order=o, spare_part=SparePart.objects.get(id=item['spare_part'])).update(quantity=item['sum_quantity'])
-            else:
-                sup_item.save()
-    return HttpResponseRedirect(reverse('main:workspace'))
+            defaults = {'quantity': item['sum_quantity']}
+            obj, created = OrderSupItem.objects.update_or_create(order=o,
+                                                  spare_part=SparePart.objects.get(id=item['spare_part']),
+                                                  defaults=defaults)
+    return HttpResponseRedirect(reverse('main:order_sup'))
 
 
 def invoices(request):
@@ -221,9 +293,10 @@ class ChartData(APIView):
         data = Invoice.objects.values('supplier', 'items__spare_part').annotate(sum_of_=Sum('items__sum_of'))
         labels = []
         d = []
+        spare_part = SparePart.objects.all()
         for sup in Supplier.objects.all():
             data1 = Invoice.objects.filter(supplier=sup).values('supplier', 'items__spare_part').annotate(sum_of_=Sum('items__sum_of'))
-            labels.append([i['items__spare_part'] for i in data1])
+            labels.append([spare_part.get(id=i['items__spare_part']).name for i in data1])
             d.append([i['sum_of_'] if i['sum_of_'] is not None else 0 for i in data1])
         data = {
             'data': data,
@@ -243,23 +316,79 @@ class ChartData(APIView):
         return Response(data=data)
 
 
-def some_view(request, order_id):
-    # Create a file-like buffer to receive PDF data.
+def form_order_cust(request, order_id):
+    order = get_object_or_404(OrderCust, pk=order_id)
     buffer = io.BytesIO()
 
     # Create the PDF object, using the buffer as its "file."
     p = canvas.Canvas(buffer)
+    document_title = f'form_order_cust_{order.id}'
+    customer = order.customer_name
+    title = f'Заказ {customer}'
+    id_ = '0' * (10 - len((str(order.id)))) + str(order.id)
+    customer_phone = order.customer_phone
+    car = order.car
+    prepayment = str(order.prepayment)
+    delivery_time = str(order.delivery_time)
+    items = OrderCustItem.objects.filter(order=order)
+
+    p.setTitle(document_title)
+    pdfmetrics.registerFont(
+        TTFont('abc', 'timesnewromanpsmt.ttf')
+    )
+
+    # creating the title by setting it's font
+    # and putting it on the canvas
+    p.setFont('abc', 16)
+    p.drawCentredString(300, 770, title)
 
     # Draw things on the PDF. Here's where the PDF generation happens.
     # See the ReportLab documentation for the full list of functionality.
-    p.drawString(100, 100, "Hello world.")
+    p.setFont('abc', 14)
 
-    # Close the PDF object cleanly, and we're done.
+    p.drawString(50, 700, 'Код: ' + id_)
+    p.drawString(50, 680, 'Имя: ' + customer)
+    p.drawString(50, 660, 'Телефон: ' + customer_phone)
+    p.drawString(50, 640, 'Автомобиль: ' + car)
+    p.drawString(50, 620, 'Срок доставки: ' + delivery_time)
+    p.drawString(50, 600, 'Предоплата: ' + prepayment + ' руб.')
+
+    my_data = [['Название детали', 'Количество', 'Цена'],]
+
+    for i in items:
+        my_data.append([i.spare_part, i.quantity, i.price])
+
+    c_width = [3 * inch, 1.5 * inch, 1.5 * inch]
+    t = Table(my_data, rowHeights=20, repeatRows=1, colWidths=c_width)
+    t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                           ('FONTSIZE', (0, 0), (-1, -1), 14),
+                           ('FONTNAME', (0, 0), (-1, -1), 'abc'),
+                           ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                           ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                           ]))
+
+    h = 550 - (10 * items.count())
+    t.wrapOn(p, 300, 50)
+    t.drawOn(p, 50, h)
+
+    p.drawString(380, 130, 'Подпись:')
+    p1_style = ParagraphStyle('My Para style',
+                              fontName='Times-Roman',
+                              fontSize=16,
+                              borderColor='#000000',
+                              borderWidth=2,
+                              borderPadding=(20, 20, 20),
+                              leading=20,
+                              alignment=0
+                              )
+    p1 = Paragraph(''' ''', p1_style)
+    p1.wrapOn(p, 100, 100)
+    p1.drawOn(p, 400, 100)
     p.showPage()
     p.save()
 
     # FileResponse sets the Content-Disposition header so that browsers
     # present the option to save the file.
     buffer.seek(0)
-    return FileResponse(buffer, as_attachment=True, filename="hello.pdf")
+    return FileResponse(buffer, as_attachment=True, filename=f"form_order_cust_{order.id}.pdf")
 
